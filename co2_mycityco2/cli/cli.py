@@ -5,9 +5,9 @@ cli = typer.Typer(no_args_is_help=True)
 
 @cli.command()
 def hello():
-    print("Hello from mycityco2")
+    print("Hello from mycityco2 plugins")
 
 
 @cli.command()
 def goodbye():
-    print("Goodbye from mycityco2")
+    print("Goodbye from mycityco2 plugins")
