@@ -1,7 +1,9 @@
-from .cli.cli import cli
-
 __version__ = "0.1.1"
 
 __co2__ = True
+
+from .cli.cli import cli
+
+# from .plugin import MyCityCo2 as Plugin
 
 __all__ = ["cli", "__co2__"]
