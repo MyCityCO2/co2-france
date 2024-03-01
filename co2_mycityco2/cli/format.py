@@ -1,5 +1,6 @@
 import time
 from pathlib import Path
+from typing import List, Optional
 
 import typer
 from loguru import logger
@@ -12,20 +13,22 @@ cli = typer.Typer(no_args_is_help=True)
 
 @cli.command()
 def france(
-    department: str = typer.Option(
+    department: Optional[str] = typer.Option(
         "74",
         "-d",
         "--department",
         help="What department do want to format",  # 74 as default value
     ),
-    force: bool = typer.Option(False, "-f", "--force", help="Remove confirmation"),
-    limit: str = typer.Option(
+    force: Optional[bool] = typer.Option(
+        False, "-f", "--force", help="Remove confirmation"
+    ),
+    limit: Optional[str] = typer.Option(
         "50",
         "-l",
         "--limit",
         help="How many cities per department do you want to import ?",
     ),
-    path: Path = typer.Option(
+    path: Optional[Path] = typer.Option(
         Path("co2-output"),
         "-p",
         "--path",
@@ -36,6 +39,11 @@ def france(
         readable=False,
         resolve_path=True,
         help="Where do you want to save the output file ?",
+    ),
+    names: Optional[List[str]] = typer.Option(
+        [],
+        "--name",
+        help="Name of cities you only want. Separate using space.",
     ),
 ):
     if not path.exists():
@@ -71,7 +79,7 @@ def france(
         if not department_path.exists():
             department_path.mkdir()
 
-        importer = France(limit=limit, department=department)
+        importer = France(limit=limit, department=department, names=names)
         logger.info(f"Starting department of '{DEPARTMENTS.get(department)}'")
 
         importer.account_move.to_csv(department_path / "accounting.csv", index=False)

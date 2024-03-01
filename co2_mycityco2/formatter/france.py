@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 
 import pandas
 import requests
@@ -20,11 +20,17 @@ class France(AbstractFormatter):
         limit: int = 50,
         offset: int = 0,
         department: int = 74,
+        names: List[str] = [],
     ):
         super().__init__()
         self.rename_fields: dict = {"com_name": "name", "com_siren_code": "district"}
         self._city_count: int = 0
         self._department = department
+        self._names = names
+
+        if self._names:
+            limit = -1
+            offset = 0
 
         self.url: str = CITIES_URL.format(limit, offset, department)
 
@@ -50,6 +56,8 @@ class France(AbstractFormatter):
 
         for city in data:
             city = city.get("fields")
+            if self._names and city.get("com_name") not in self._names:
+                continue
             logger.info(f"Retrieving {city.get('com_name')}")
 
             cities_data = self.get_account_move_data(siren=city.get("com_siren_code"))
@@ -64,7 +72,6 @@ class France(AbstractFormatter):
                         for k, v in self.rename_fields.items()
                         if v == "name"
                     }
-
                     final_data.append(city_value)
 
         self._city_count += len(final_data)
