@@ -33,7 +33,7 @@ class AbstractFormatter(ABC):
 
     @abstractmethod
     def get_cities(self) -> List[Dict[str, str]]:
-        """This need to return an list of dict with two value inside: name and district. Name equal the name of the city and district equal the identifier of the city, it can be and unique id or anything like that"""
+        """This need to return an list of dict with three value inside: name, chart_of_account and identifier. Name equal the name of the city, chart_of_account equal to the account set from gen_account_account_data (should be the set's name) and identifier equal the identifier number of the city, it can be and unique id or anything like that"""
         raise NotImplementedError()
 
     @abstractmethod
@@ -44,7 +44,7 @@ class AbstractFormatter(ABC):
     @abstractmethod
     def get_account_move(self):
         # TODO: make an docstring for this function
-        # {'city': 'Abondance|M14', 'district': '217400019', 'account': '74834', 'currency': 'EUR', 'date': '2010-12-31', 'debit_bud': 0.0, 'credit_bud': 16395.0}
+        # {'city': 'Abondance', 'chart_of_account': 'M14', 'identifier': '217400019', 'account': '74834', 'currency': 'EUR', 'date': '2010-12-31', 'debit': 0.0, 'credit': 16395.0}
         raise NotImplementedError()
 
     @property

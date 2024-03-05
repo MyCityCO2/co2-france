@@ -23,7 +23,7 @@ class France(AbstractFormatter):
         names: List[str] = [],
     ):
         super().__init__()
-        self.rename_fields: dict = {"com_name": "name", "com_siren_code": "district"}
+        self.rename_fields: dict = {"com_name": "name", "com_siren_code": "identifier"}
         self._city_count: int = 0
         self._department = department
         self._names = names
@@ -68,9 +68,12 @@ class France(AbstractFormatter):
                 if nomen in settings.FRANCE_NOMENCLATURE:
                     city_value = {v: city.get(k) for k, v in self.rename_fields.items()}
                     city_value |= {
-                        "name": city.get(k) + "|" + nomen
+                        "name": city.get(k)
                         for k, v in self.rename_fields.items()
                         if v == "name"
+                    }
+                    city_value |= {
+                        "chart_of_account": nomen,
                     }
                     final_data.append(city_value)
 
@@ -160,10 +163,11 @@ class France(AbstractFormatter):
             self.get_cities()
         for city in self._cities:
             name = city.get("name")
-            district = city.get("district")
+            identifier = city.get("identifier")
+            nomen = city.get("chart_of_account")
 
-            sum_credit_bud = 0
-            sum_debit_bud = 0
+            sum_credit = 0
+            sum_debit = 0
 
             for year in settings.YEARS:
                 city_data_year = []
@@ -171,32 +175,33 @@ class France(AbstractFormatter):
 
                 logger.info(f"Retrieving accounting set for {name} in {year}")
 
-                city_data = self.get_account_move_data(siren=district, year=year)
+                city_data = self.get_account_move_data(siren=identifier, year=year)
 
                 for aml in city_data:  # aml = account_move_line
                     account_account = str(aml.get("compte"))
 
-                    debit_bud = aml.get("obnetdeb") + aml.get("onbdeb")
-                    sum_debit_bud += debit_bud
+                    debit = aml.get("obnetdeb") + aml.get("onbdeb")
+                    sum_debit += debit
 
-                    credit_bud = aml.get("obnetcre") + aml.get("onbcre")
-                    sum_credit_bud += credit_bud
+                    credit = aml.get("obnetcre") + aml.get("onbcre")
+                    sum_credit += credit
 
                     currency = self.currency_name
 
                     city_data_year.append(
                         dict(
                             city=name,
-                            district=district,
+                            chart_of_account=nomen,
+                            identifier=identifier,
                             account=account_account,
                             currency=currency,
                             date=date,
-                            debit_bud=debit_bud,
-                            credit_bud=credit_bud,
+                            debit=debit,
+                            credit=credit,
                         )
                     )
 
-                difference = sum_credit_bud - sum_debit_bud
+                difference = sum_credit - sum_debit
 
                 if round(difference, 2) != 0:
                     logger.error(f"The city {name} has an accounting error in {year}")
