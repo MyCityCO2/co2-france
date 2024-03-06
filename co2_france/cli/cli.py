@@ -5,14 +5,15 @@ from typing import List, Optional
 import typer
 from loguru import logger
 
-from co2_mycityco2.formatter.france import France
-from co2_mycityco2.utils.fr import DEPARTMENTS
+from co2_france.const import settings
+from co2_france.formatter.france import France
+from co2_france.utils.fr import DEPARTMENTS
 
 cli = typer.Typer(no_args_is_help=True)
 
 
 @cli.command()
-def france(
+def format(
     department: Optional[str] = typer.Option(
         "74",
         "-d",
@@ -72,7 +73,9 @@ def france(
         raise typer.Abort()
 
     for name, account in France.accounts.items():
-        account.to_csv(path / f"account-{name}.csv", index=False)
+        account.to_csv(
+            path / settings.ACCOUNT_SET_NAMING.format(name=name), index=False
+        )
 
     def get_department_date(department):
         department_path = path / department

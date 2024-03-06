@@ -4,10 +4,10 @@ unit-tests:
 	@pytest
 
 unit-tests-cov:
-	@pytest --cov=co2_mycityco2 --cov-report term-missing --cov-report=html
+	@pytest --cov=co2_france --cov-report term-missing --cov-report=html
 
 unit-tests-cov-fail:
-	@pytest --cov=co2_mycityco2 --cov-report term-missing --cov-report=html --cov-fail-under=80 --junitxml=pytest.xml | tee pytest-coverage.txt
+	@pytest --cov=co2_france --cov-report term-missing --cov-report=html --cov-fail-under=80 --junitxml=pytest.xml | tee pytest-coverage.txt
 
 clean-cov:
 	@rm -rf .coverage

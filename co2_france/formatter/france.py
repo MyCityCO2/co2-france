@@ -3,11 +3,10 @@ from typing import Dict, List
 import pandas
 import requests
 import typer
+from co2.formatter import AbstractFormatter
 from loguru import logger
 
-from co2_mycityco2.const import settings
-
-from .base import AbstractFormatter
+from co2_france.const import settings
 
 CITIES_URL: str = "https://public.opendatasoft.com/api/records/1.0/search/?dataset=georef-france-commune&q=&sort=com_name&rows={}&start={}&refine.dep_code={}"
 
