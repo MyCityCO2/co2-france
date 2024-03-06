@@ -6,7 +6,7 @@ import typer
 from loguru import logger
 
 from co2_france.const import settings
-from co2_france.formatter.france import France
+from co2_france.formatter import France
 from co2_france.utils.fr import DEPARTMENTS
 
 cli = typer.Typer(no_args_is_help=True)
@@ -73,19 +73,16 @@ def format(
         raise typer.Abort()
 
     for name, account in France.accounts.items():
-        account.to_csv(
-            path / settings.ACCOUNT_SET_NAMING.format(name=name), index=False
-        )
+        account.to_csv(path / settings.COA_SET_NAMING.format(name=name), index=False)
 
-    def get_department_date(department):
-        department_path = path / department
-        if not department_path.exists():
-            department_path.mkdir()
-
+    def get_department_data(department):
         importer = France(limit=limit, department=department, names=names)
         logger.info(f"Starting department of '{DEPARTMENTS.get(department)}'")
 
-        importer.account_move.to_csv(department_path / "accounting.csv", index=False)
+        importer.account_move.to_csv(
+            path / settings.ACCOUNT_SET_NAMING.format(department=department),
+            index=False,
+        )
 
     start_time = time.perf_counter()
     if isinstance(DEPARTMENTS.get(department), int):
@@ -93,9 +90,9 @@ def format(
             if isinstance(name, int):
                 continue
 
-            get_department_date(id)
+            get_department_data(id)
     else:
-        get_department_date(department)
+        get_department_data(department)
     end_time = time.perf_counter()
 
     final_time = end_time - start_time
