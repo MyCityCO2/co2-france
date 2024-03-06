@@ -7,7 +7,7 @@ from loguru import logger
 
 from co2_france.const import settings
 from co2_france.formatter import France
-from co2_france.utils.fr import DEPARTMENTS
+from co2_france.france import DEPARTMENTS
 
 cli = typer.Typer(no_args_is_help=True)
 
