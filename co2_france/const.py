@@ -17,5 +17,7 @@ class Settings(SettingsInherit):
     }
     FRANCE_NOMENCLATURE: list = list(FRANCE_NOMENCLATURE_PARAMS.keys())
 
+    ACCOUNT_SET_NAMING: str = "account-{name}.csv"
+
 
 settings: Settings = Settings()
