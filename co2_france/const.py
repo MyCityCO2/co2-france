@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Tuple
 
 from co2.const import Settings as SettingsInherit
 
@@ -22,6 +23,15 @@ class Settings(SettingsInherit):
 
     COA_SET_NAMING: str = "coa-{name}.csv"
     ACCOUNT_SET_NAMING: str = "account-{department}.csv"
+
+    FRANCE_COA_CONDITION_PATH: Path = _path / "data" / "coa_condition.csv"
+
+    FRANCE_MAPPING_COA_CARBON_PATH: Path = _path / "data" / "mapping_coa_carbon.csv"
+
+    FRANCE_FILE_TO_EXPORT: Tuple[Tuple[Path, str], ...] = (
+        (_path / "data" / "coa_categories.csv", "coa_categories.csv"),
+        (_path / "data" / "coa_condition.csv", "coa_condition.csv"),
+    )
 
 
 settings: Settings = Settings()

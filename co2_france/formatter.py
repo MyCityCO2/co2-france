@@ -1,3 +1,4 @@
+from fnmatch import fnmatch
 from typing import Dict, List
 
 import pandas
@@ -26,6 +27,8 @@ class France(AbstractFormatter):
         self._city_count: int = 0
         self._department = department
         self._names = names
+
+        self._coa_condition = False
 
         if self._names:
             limit = -1
@@ -156,6 +159,15 @@ class France(AbstractFormatter):
             accounts[name] = pandas.DataFrame(account)
         return accounts
 
+    def _load_coa_condition(self):
+        if self._coa_condition is False:
+            df = pandas.read_csv(settings.FRANCE_MAPPING_COA_CARBON_PATH)
+            df["rule_order"] = df["rule_order"].astype("int")
+            df["condition"] = df["condition"].astype("str")
+            df.sort_values(by=["rule_order"])
+            self._coa_condition = df
+        return self._coa_condition
+
     def get_account_move(self):
         final_data = []
         if not self._cities:
@@ -177,7 +189,16 @@ class France(AbstractFormatter):
                 city_data = self.get_account_move_data(siren=identifier, year=year)
 
                 for aml in city_data:  # aml = account_move_line
-                    account_account = str(aml.get("compte"))
+                    account_account_code = str(aml.get("compte"))
+                    carbon_factor = None
+
+                    coa_condition = self._load_coa_condition()
+                    for _, condition in coa_condition.iterrows():
+                        if fnmatch(account_account_code, condition["condition"]):
+                            carbon_factor = condition[
+                                "carbon_factor"
+                            ]  # External ID for our account_account
+                            break
 
                     debit = aml.get("obnetdeb") + aml.get("onbdeb")
                     sum_debit += debit
@@ -192,11 +213,12 @@ class France(AbstractFormatter):
                             city=name,
                             chart_of_account=nomen,
                             identifier=identifier,
-                            account=account_account,
+                            account=account_account_code,
                             currency=currency,
                             date=date,
                             debit=debit,
                             credit=credit,
+                            carbon_factor=carbon_factor,
                         )
                     )
 

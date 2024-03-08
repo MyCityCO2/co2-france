@@ -1,3 +1,4 @@
+import shutil
 import time
 from pathlib import Path
 from typing import List, Optional
@@ -83,6 +84,12 @@ def format(
             path / settings.ACCOUNT_SET_NAMING.format(department=department),
             index=False,
         )
+
+    for src, dst in settings.FRANCE_FILE_TO_EXPORT:
+        if src.is_file():
+            file = src.as_posix().split("/")[-1]
+            logger.info(f"Copying {file} to output")
+            shutil.copy2(src.as_posix(), path / dst)
 
     start_time = time.perf_counter()
     if isinstance(DEPARTMENTS.get(department), int):
