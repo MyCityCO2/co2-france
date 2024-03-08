@@ -123,8 +123,10 @@ class France(AbstractFormatter):
         return data
 
     @classmethod
-    def gen_account_account_data(self):
+    def gen_account_account_data(cls):
         final_accounts = {}
+
+        coa_condition = cls._load_coa_condition()
 
         for nomen in settings.FRANCE_NOMENCLATURE:
             existing_account = []
@@ -140,33 +142,44 @@ class France(AbstractFormatter):
 
                 for account in accounts:
                     account = account.get("fields")
+                    account_code = account.get("code_nature_cpte")
+                    account_label = account.get("libelle_nature_cpte")
 
-                    if account.get("code_nature_cpte") not in existing_account:
+                    carbon_factor = None
+
+                    for _, condition in coa_condition.iterrows():
+                        if fnmatch(account_code, condition["condition"]):
+                            carbon_factor = condition[
+                                "carbon_factor"
+                            ]  # External ID for our account_account
+                            break
+
+                    if account_code not in existing_account:
                         final_accounts[nomen].append(
-                            {
-                                "name": account.get("libelle_nature_cpte"),
-                                "code": account.get("code_nature_cpte"),
-                            }
+                            dict(
+                                name=account_label,
+                                code=account_code,
+                                carbon_factor=carbon_factor,
+                            )
                         )
-                        existing_account.append(account.get("code_nature_cpte"))
+                        existing_account.append(account_code)
         return final_accounts
 
     @classmethod
     @property
-    def accounts(self) -> Dict[str, pandas.DataFrame]:
+    def accounts(cls) -> Dict[str, pandas.DataFrame]:
         accounts = {}
         for name, account in France.gen_account_account_data().items():
             accounts[name] = pandas.DataFrame(account)
         return accounts
 
-    def _load_coa_condition(self):
-        if self._coa_condition is False:
-            df = pandas.read_csv(settings.FRANCE_MAPPING_COA_CARBON_PATH)
-            df["rule_order"] = df["rule_order"].astype("int")
-            df["condition"] = df["condition"].astype("str")
-            df.sort_values(by=["rule_order"])
-            self._coa_condition = df
-        return self._coa_condition
+    @classmethod
+    def _load_coa_condition(cls):
+        df = pandas.read_csv(settings.FRANCE_MAPPING_COA_CARBON_PATH)
+        df["rule_order"] = df["rule_order"].astype("int")
+        df["condition"] = df["condition"].astype("str")
+        df.sort_values(by=["rule_order"])
+        return df
 
     def get_account_move(self):
         final_data = []
@@ -190,15 +203,6 @@ class France(AbstractFormatter):
 
                 for aml in city_data:  # aml = account_move_line
                     account_account_code = str(aml.get("compte"))
-                    carbon_factor = None
-
-                    coa_condition = self._load_coa_condition()
-                    for _, condition in coa_condition.iterrows():
-                        if fnmatch(account_account_code, condition["condition"]):
-                            carbon_factor = condition[
-                                "carbon_factor"
-                            ]  # External ID for our account_account
-                            break
 
                     debit = aml.get("obnetdeb") + aml.get("onbdeb")
                     sum_debit += debit
@@ -218,7 +222,6 @@ class France(AbstractFormatter):
                             date=date,
                             debit=debit,
                             credit=credit,
-                            carbon_factor=carbon_factor,
                         )
                     )
 
