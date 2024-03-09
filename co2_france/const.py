@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Tuple
 
 from co2.const import Settings as SettingsInherit
 
@@ -7,6 +8,7 @@ _path = Path(__file__).absolute().parent
 
 class Settings(SettingsInherit):
     # YEARS: list = list(range(2010, 2023))
+
     YEARS: list = [2010]
 
     FRANCE_NOMENCLATURE_PARAMS: dict = {
@@ -17,7 +19,19 @@ class Settings(SettingsInherit):
     }
     FRANCE_NOMENCLATURE: list = list(FRANCE_NOMENCLATURE_PARAMS.keys())
 
-    ACCOUNT_SET_NAMING: str = "account-{name}.csv"
+    FRANCE_PATH: Path = _path
+
+    COA_SET_NAMING: str = "coa-{name}.csv"
+    ACCOUNT_SET_NAMING: str = "account-{department}.csv"
+
+    FRANCE_COA_CONDITION_PATH: Path = _path / "data" / "coa_condition.csv"
+
+    FRANCE_MAPPING_COA_CARBON_PATH: Path = _path / "data" / "mapping_coa_carbon.csv"
+
+    FRANCE_FILE_TO_EXPORT: Tuple[Tuple[Path, str], ...] = (
+        (_path / "data" / "coa_categories.csv", "coa_categories.csv"),
+        (_path / "data" / "coa_condition.csv", "coa_condition.csv"),
+    )
 
 
 settings: Settings = Settings()

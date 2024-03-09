@@ -1,3 +1,4 @@
+from fnmatch import fnmatch
 from typing import Dict, List
 
 import pandas
@@ -26,6 +27,8 @@ class France(AbstractFormatter):
         self._city_count: int = 0
         self._department = department
         self._names = names
+
+        self._coa_condition = False
 
         if self._names:
             limit = -1
@@ -120,8 +123,10 @@ class France(AbstractFormatter):
         return data
 
     @classmethod
-    def gen_account_account_data(self):
+    def gen_account_account_data(cls):
         final_accounts = {}
+
+        coa_condition = cls._load_coa_condition()
 
         for nomen in settings.FRANCE_NOMENCLATURE:
             existing_account = []
@@ -137,24 +142,44 @@ class France(AbstractFormatter):
 
                 for account in accounts:
                     account = account.get("fields")
+                    account_code = account.get("code_nature_cpte")
+                    account_label = account.get("libelle_nature_cpte")
 
-                    if account.get("code_nature_cpte") not in existing_account:
+                    carbon_factor = None
+
+                    for _, condition in coa_condition.iterrows():
+                        if fnmatch(account_code, condition["condition"]):
+                            carbon_factor = condition[
+                                "carbon_factor"
+                            ]  # External ID for our account_account
+                            break
+
+                    if account_code not in existing_account:
                         final_accounts[nomen].append(
-                            {
-                                "name": account.get("libelle_nature_cpte"),
-                                "code": account.get("code_nature_cpte"),
-                            }
+                            dict(
+                                name=account_label,
+                                code=account_code,
+                                carbon_factor=carbon_factor,
+                            )
                         )
-                        existing_account.append(account.get("code_nature_cpte"))
+                        existing_account.append(account_code)
         return final_accounts
 
     @classmethod
     @property
-    def accounts(self) -> Dict[str, pandas.DataFrame]:
+    def accounts(cls) -> Dict[str, pandas.DataFrame]:
         accounts = {}
         for name, account in France.gen_account_account_data().items():
             accounts[name] = pandas.DataFrame(account)
         return accounts
+
+    @classmethod
+    def _load_coa_condition(cls):
+        df = pandas.read_csv(settings.FRANCE_MAPPING_COA_CARBON_PATH)
+        df["rule_order"] = df["rule_order"].astype("int")
+        df["condition"] = df["condition"].astype("str")
+        df.sort_values(by=["rule_order"])
+        return df
 
     def get_account_move(self):
         final_data = []
@@ -177,7 +202,7 @@ class France(AbstractFormatter):
                 city_data = self.get_account_move_data(siren=identifier, year=year)
 
                 for aml in city_data:  # aml = account_move_line
-                    account_account = str(aml.get("compte"))
+                    account_account_code = str(aml.get("compte"))
 
                     debit = aml.get("obnetdeb") + aml.get("onbdeb")
                     sum_debit += debit
@@ -192,7 +217,7 @@ class France(AbstractFormatter):
                             city=name,
                             chart_of_account=nomen,
                             identifier=identifier,
-                            account=account_account,
+                            account=account_account_code,
                             currency=currency,
                             date=date,
                             debit=debit,
