@@ -51,6 +51,10 @@ class France(AbstractFormatter):
     def currency_name(self):
         return "EUR"
 
+    @property
+    def country_name_iso(self):
+        return "FR"
+
     def get_cities(self):
         data = requests.get(self.url, allow_redirects=False).json().get("records")
 
@@ -219,6 +223,7 @@ class France(AbstractFormatter):
                             identifier=identifier,
                             account=account_account_code,
                             currency=currency,
+                            country_iso=self.country_name_iso,
                             date=date,
                             debit=debit,
                             credit=credit,
