@@ -47,6 +47,11 @@ def format(
         "--name",
         help="Name of cities you only want. Separate using space.",
     ),
+    no_coa: bool = typer.Option(
+        False,
+        "--no-coa",
+        help="Do not generate Chart Of Account. Use if those data are already generated",
+    ),
 ):
     if not path.exists():
         do_create = force
@@ -73,8 +78,11 @@ def format(
         logger.error("This department does not exist")
         raise typer.Abort()
 
-    for name, account in France.accounts.items():
-        account.to_csv(path / settings.COA_SET_NAMING.format(name=name), index=False)
+    if not no_coa:
+        for name, account in France.accounts.items():
+            account.to_csv(
+                path / settings.COA_SET_NAMING.format(name=name), index=False
+            )
 
     def get_department_data(department):
         importer = France(limit=limit, department=department, names=names)
